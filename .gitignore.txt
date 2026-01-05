@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual env
+.env
+.venv
+env/
+venv/
+
+# Conda
+*.conda
+*.env
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database / runtime
+*.sqlite3
+
+# Model / cache
+.cache/
