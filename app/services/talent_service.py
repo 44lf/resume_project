@@ -1,4 +1,5 @@
 from tortoise.transactions import in_transaction
+from typing import Optional
 from app.db.models.screening import ScreeningResume
 from app.db.models.talent import Talent
 from app.db.models.skill import Skill
@@ -6,11 +7,11 @@ from app.db.models.talent_skill import TalentSkill
 
 async def screening_to_talent_with_skills(
     screening_id: int,
-    skill_names: list[str],
+    skill_names: Optional[list[str]] = None,
 ) -> Talent:
     async with in_transaction():
         # 1. 查筛查池记录
-        screening = await ScreeningResume.get(id=screening_id)
+        screening = await ScreeningResume.get_or_none(id=screening_id)
         if not screening:
             raise ValueError('筛查记录不存在')
         # 2. 防止重复入库
@@ -19,6 +20,9 @@ async def screening_to_talent_with_skills(
         ).exists()
         if exists:
             raise ValueError("该筛查记录已入库")
+
+        skills_from_screening = screening.extracted_skills or []
+        skill_names = skill_names if skill_names is not None else skills_from_screening
 
         # 3. 写入人才表
         talent = await Talent.create(
@@ -48,5 +52,4 @@ async def screening_to_talent_with_skills(
         await screening.save()
 
         return talent
-
 

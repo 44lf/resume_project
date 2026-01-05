@@ -4,6 +4,8 @@ from tortoise.contrib.fastapi import register_tortoise
 
 from app.config.settings import DB_URL, DB_GENERATE_SCHEMAS
 from app.routers.screening import router as screening_router
+from app.routers.conditions import router as condition_router
+from app.routers.talent import router as talent_router
 
 # 1) 加载环境变量
 load_dotenv()
@@ -13,6 +15,8 @@ app = FastAPI(title="Resume Screening API")
 
 # 3) 路由
 app.include_router(screening_router, prefix="/api", tags=["screening"])
+app.include_router(condition_router, prefix="/api", tags=["conditions"])
+app.include_router(talent_router, prefix="/api", tags=["talent"])
 
 # 4) 数据库初始化
 register_tortoise(
@@ -27,5 +31,4 @@ register_tortoise(
 @app.get("/health")
 async def health():
     return {"status": "ok"}
-
 

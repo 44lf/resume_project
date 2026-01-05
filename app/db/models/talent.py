@@ -16,6 +16,7 @@ class Talent(models.Model):
     email = fields.CharField(max_length=128, null=True)   # 邮箱
 
     resume_object_key = fields.CharField(max_length=512)  # 简历来源（MinIO）
+    source_screening_id = fields.BigIntField(null=True)   # 来源筛查记录
 
     at_time = fields.DatetimeField(auto_now_add=True)     # 加入时间
 

@@ -15,9 +15,15 @@ class ScreeningResume(models.Model):
     extracted_grad_year = fields.IntField(null=True)
     extracted_phone = fields.CharField(max_length=32, null=True)
     extracted_email = fields.CharField(max_length=128, null=True)
+    extracted_skills = fields.JSONField(null=True)
+    # 简历中拆分出的图片（MinIO 对象键列表）
+    image_object_keys = fields.JSONField(null=True)
 
     # 状态：未筛选 / 已筛选
     is_screened = fields.BooleanField(default=False)
+
+    # 命中的筛选条件 id 列表
+    matched_condition_ids = fields.JSONField(null=True)
 
     # 入库时间
     at_time = fields.DatetimeField(auto_now_add=True)
