@@ -1,41 +1,15 @@
 from typing import Optional, Dict, Any
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
 
 from app.services.talent_service import screening_to_talent_with_skills
 from app.db.models.talent import Talent
 from app.db.models.skill import Skill
 from app.db.models.talent_skill import TalentSkill
+from app.models.model_talent import TalentCreateFromScreening, TalentOut, TalentListOut, GraphResponse
 
 router = APIRouter()
 
-
-class TalentCreateFromScreening(BaseModel):
-    screening_id: int
-    skill_names: Optional[list[str]] = None
-
-
-class TalentOut(BaseModel):
-    id: int
-    name: Optional[str]
-    gender: Optional[str]
-    school: Optional[str]
-    major: Optional[str]
-    degree: Optional[str]
-    grad_year: Optional[int]
-    phone: Optional[str]
-    email: Optional[str]
-    resume_object_key: str
-    source_screening_id: Optional[int]
-
-    class Config:
-        from_attributes = True
-
-
-class TalentListOut(BaseModel):
-    total: int
-    items: list[TalentOut]
 
 
 @router.post("/talents/from-screening", response_model=TalentOut)
@@ -76,9 +50,6 @@ async def list_talents(
     return {"total": total, "items": items}
 
 
-class GraphResponse(BaseModel):
-    nodes: list[Dict[str, Any]]
-    edges: list[Dict[str, Any]]
 
 
 @router.get("/talents/graph", response_model=GraphResponse)
