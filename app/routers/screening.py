@@ -1,31 +1,7 @@
-from fastapi import APIRouter, UploadFile, File, Query, HTTPException
-from tortoise.expressions import Q
+from fastapi import APIRouter,UploadFile,File
 from app.services.screening_service import upload_and_parse_pdf
-from app.db.models.screening import ScreeningResume
-from app.models.model_screening import ScreeningListOut
-from typing import Optional
-from enum import Enum
 
 router = APIRouter()
-
-
-# ============ 枚举定义 ============
-class DegreeEnum(str, Enum):
-    """学位枚举"""
-    BACHELOR = "本科"
-    MASTER = "硕士"
-    DOCTOR = "博士"
-    OTHER = "其他"
-
-
-class ScreeningStatusEnum(str, Enum):
-    """筛选状态枚举"""
-    PENDING = "pending"      # 待筛选
-    PASSED = "passed"        # 已通过
-    REJECTED = "rejected"    # 已拒绝
-
-
-# ============ 路由端点 ============
 @router.post("/screening/upload")
 async def upload_screening_pdf(file: UploadFile = File(...)):
     """
@@ -217,3 +193,26 @@ async def get_screening_stats():
         "rejected": rejected,
         "by_degree": by_degree
     }
+
+
+@router.get("/screening/resumes", response_model=ScreeningListOut)
+async def list_screening_resumes(
+    name: Optional[str] = Query(None),
+    school: Optional[str] = Query(None),
+    major: Optional[str] = Query(None),
+    degree: Optional[str] = Query(None),
+    is_screened: Optional[bool] = Query(None),
+    matched_condition_id: Optional[int] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+):
+    return await list_screening_resumes(
+        name=name,
+        school=school,
+        major=major,
+        degree=degree,
+        is_screened=is_screened,
+        matched_condition_id=matched_condition_id,
+        page=page,
+        page_size=page_size,
+    )

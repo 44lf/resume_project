@@ -14,9 +14,7 @@ load_dotenv()
 app = FastAPI(title="简历筛选与人才管理系统")
 
 # 3) 路由
-app.include_router(screening_router, prefix="/api", tags=["筛选池"])
-app.include_router(condition_router, prefix="/api", tags=["条件"])
-app.include_router(talent_router, prefix="/api", tags=["人才库"])
+app.include_router(screening_router, prefix="/api", tags=["screening"])
 
 # 4) 数据库初始化
 register_tortoise(
