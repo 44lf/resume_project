@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FastAPI (uvicorn)",
+      "type": "python",
+      "request": "launch",
+
+      // 用模块方式启动，避免 import app 失败
+      "module": "uvicorn",
+
+      // 等价于：python -m uvicorn app.main:app --reload
+      "args": [
+        "app.main:app",
+        "--reload"
+      ],
+
+      // 项目根目录作为工作目录（关键）
+      "cwd": "${workspaceFolder}",
+
+      // 使用集成终端，方便看日志
+      "console": "integratedTerminal",
+
+      // 固定解释器（配合 settings.json）
+      "justMyCode": true,
+
+      // FastAPI / uvicorn 不要在启动前暂停
+      "stopOnEntry": false
+    }
+  ]
+}
