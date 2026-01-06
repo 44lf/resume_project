@@ -35,6 +35,13 @@ def _normalize_result(d: dict) -> dict:
                 return d[k]
         return None
 
+    skills_value = d.get("skills") or d.get("skill_list")
+    if isinstance(skills_value, str):
+        # 尝试用逗号/换行拆分
+        skills_value = [
+            s.strip() for s in re.split(r"[,\n;，；]", skills_value) if s.strip()
+        ]
+
     out = {
         "name": pick("name", "姓名"),
         "school": pick("school", "毕业院校", "院校"),
@@ -43,6 +50,7 @@ def _normalize_result(d: dict) -> dict:
         "grad_year": pick("grad_year", "毕业年份", "毕业时间"),
         "phone": pick("phone", "mobile", "手机号", "手机"),
         "email": pick("email", "邮箱"),
+        "skills": skills_value or [],
     }
 
     # grad_year 尝试转 int
@@ -74,6 +82,7 @@ async def extract_resume_info(text: str) -> dict:
 - grad_year（毕业年份，整数）
 - phone
 - email
+- skills（数组，列出简历中的关键技能）
 
 缺失填 null。
 

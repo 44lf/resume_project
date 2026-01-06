@@ -1,7 +1,35 @@
-from fastapi import APIRouter,UploadFile,File
-from app.services.screening_service import upload_and_parse_pdf
+from typing import Optional
+from fastapi import APIRouter, UploadFile, File, Query
+from pydantic import BaseModel
+from app.services.screening_service import upload_and_parse_pdf, list_screening_resumes
 
 router = APIRouter()
+
+
+class ScreeningOut(BaseModel):
+    id: int
+    file_object_key: str
+    extracted_name: Optional[str]
+    extracted_school: Optional[str]
+    extracted_major: Optional[str]
+    extracted_degree: Optional[str]
+    extracted_grad_year: Optional[int]
+    extracted_phone: Optional[str]
+    extracted_email: Optional[str]
+    extracted_skills: list[str] | None
+    image_object_keys: list[str] | None
+    is_screened: bool
+    matched_condition_ids: list[int] | None
+
+    class Config:
+        from_attributes = True
+
+
+class ScreeningListOut(BaseModel):
+    total: int
+    items: list[ScreeningOut]
+
+
 @router.post("/screening/upload")
 async def upload_screening_pdf(file: UploadFile = File(...)):
     """
@@ -22,197 +50,4 @@ async def upload_screening_pdf(file: UploadFile = File(...)):
     return {
         "screening_id": screening.id,
         "status": "uploaded",
-        "filename": file.filename,
     }
-
-
-@router.get("/screening/resumes", response_model=ScreeningListOut)
-async def list_screening_resumes(
-    name: Optional[str] = Query(None, description="姓名（模糊搜索）"),
-    school: Optional[str] = Query(None, description="学校（模糊搜索）"),
-    major: Optional[str] = Query(None, description="专业（模糊搜索）"),
-    degree: Optional[DegreeEnum] = Query(None, description="学位"),
-    screening_status: Optional[ScreeningStatusEnum] = Query(None, description="筛选状态"),
-    matched_condition_id: Optional[int] = Query(None, description="匹配的筛选条件ID"),
-    page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页条数"),
-):
-    """
-    获取简历筛选列表
-    
-    支持多条件过滤和分页查询
-    
-    Args:
-        name: 按姓名模糊搜索
-        school: 按学校模糊搜索
-        major: 按专业模糊搜索
-        degree: 按学位精确筛选（枚举）
-        screening_status: 按筛选状态精确筛选（枚举）
-        matched_condition_id: 按匹配的筛选条件ID筛选
-        page: 页码（从1开始）
-        page_size: 每页条数（1-100）
-        
-    Returns:
-        total: 符合条件的总记录数
-        items: 当前页的简历列表
-    """
-    qs = ScreeningResume.all()
-    
-    # 字符串字段：模糊搜索
-    if name:
-        qs = qs.filter(extracted_name__icontains=name)
-    if school:
-        qs = qs.filter(extracted_school__icontains=school)
-    if major:
-        qs = qs.filter(extracted_major__icontains=major)
-    
-    # 枚举字段：精确匹配（自动转换为枚举的 value）
-    if degree:
-        qs = qs.filter(extracted_degree=degree.value)
-    
-    if screening_status:
-        qs = qs.filter(screening_status=screening_status.value)
-    
-    # 数组字段：包含查询
-    if matched_condition_id is not None:
-        qs = qs.filter(
-            Q(matched_condition_ids__contains=str(matched_condition_id)) | 
-            Q(matched_condition_ids__contains=matched_condition_id)
-        )
-
-    # 统计总数
-    total = await qs.count()
-    
-    # 分页查询
-    items = await qs.order_by("-at_time")\
-                    .offset((page - 1) * page_size)\
-                    .limit(page_size)
-    
-    return {"total": total, "items": items}
-
-
-@router.get("/screening/resumes/{resume_id}")
-async def get_resume_detail(resume_id: int):
-    """
-    获取单个简历详情
-    
-    Args:
-        resume_id: 简历ID
-        
-    Returns:
-        简历完整信息
-    """
-    resume = await ScreeningResume.get_or_none(id=resume_id)
-    if not resume:
-        raise HTTPException(status_code=404, detail="简历不存在")
-    
-    return resume
-
-
-@router.patch("/screening/resumes/{resume_id}/status")
-async def update_resume_status(
-    resume_id: int,
-    status: ScreeningStatusEnum
-):
-    """
-    更新简历筛选状态
-    
-    Args:
-        resume_id: 简历ID
-        status: 新的筛选状态（枚举）
-        
-    Returns:
-        updated: 是否更新成功
-        new_status: 新的状态值
-    """
-    resume = await ScreeningResume.get_or_none(id=resume_id)
-    if not resume:
-        raise HTTPException(status_code=404, detail="简历不存在")
-    
-    resume.screening_status = status.value
-    resume.is_screened = True  # 标记为已筛选
-    await resume.save()
-    
-    return {
-        "updated": True,
-        "resume_id": resume_id,
-        "new_status": status.value
-    }
-
-
-@router.delete("/screening/resumes/{resume_id}")
-async def delete_resume(resume_id: int):
-    """
-    删除简历记录
-    
-    Args:
-        resume_id: 简历ID
-        
-    Returns:
-        deleted: 是否删除成功
-    """
-    resume = await ScreeningResume.get_or_none(id=resume_id)
-    if not resume:
-        raise HTTPException(status_code=404, detail="简历不存在")
-    
-    await resume.delete()
-    
-    return {
-        "deleted": True,
-        "resume_id": resume_id
-    }
-
-
-@router.get("/screening/stats")
-async def get_screening_stats():
-    """
-    获取简历筛选统计信息
-    
-    Returns:
-        total: 总简历数
-        pending: 待筛选数
-        passed: 已通过数
-        rejected: 已拒绝数
-        by_degree: 按学位统计
-    """
-    total = await ScreeningResume.all().count()
-    pending = await ScreeningResume.filter(screening_status=ScreeningStatusEnum.PENDING.value).count()
-    passed = await ScreeningResume.filter(screening_status=ScreeningStatusEnum.PASSED.value).count()
-    rejected = await ScreeningResume.filter(screening_status=ScreeningStatusEnum.REJECTED.value).count()
-    
-    # 按学位统计
-    by_degree = {}
-    for degree in DegreeEnum:
-        count = await ScreeningResume.filter(extracted_degree=degree.value).count()
-        by_degree[degree.value] = count
-    
-    return {
-        "total": total,
-        "pending": pending,
-        "passed": passed,
-        "rejected": rejected,
-        "by_degree": by_degree
-    }
-
-
-@router.get("/screening/resumes", response_model=ScreeningListOut)
-async def list_screening_resumes(
-    name: Optional[str] = Query(None),
-    school: Optional[str] = Query(None),
-    major: Optional[str] = Query(None),
-    degree: Optional[str] = Query(None),
-    is_screened: Optional[bool] = Query(None),
-    matched_condition_id: Optional[int] = Query(None),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
-):
-    return await list_screening_resumes(
-        name=name,
-        school=school,
-        major=major,
-        degree=degree,
-        is_screened=is_screened,
-        matched_condition_id=matched_condition_id,
-        page=page,
-        page_size=page_size,
-    )
