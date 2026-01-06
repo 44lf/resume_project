@@ -9,7 +9,6 @@ router = APIRouter()
 
 
 
-
 @router.post("/screening/upload")
 async def upload_screening_pdf(file: UploadFile = File(...)):
     screening = await upload_and_parse_pdf(file)
