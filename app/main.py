@@ -25,7 +25,7 @@ register_tortoise(
     modules={"models": ["app.db.models"]},
     generate_schemas=DB_GENERATE_SCHEMAS,
     add_exception_handlers=True,
-)
+)   
 
 # 5) 健康检查
 @app.get("/health")
