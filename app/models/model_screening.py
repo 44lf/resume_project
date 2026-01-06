@@ -26,6 +26,3 @@ class ScreeningListOut(BaseModel):
     items: list[ScreeningOut]
 
 
-class GraphResponse(BaseModel):
-    nodes: list[Dict[str, Any]]
-    edges: list[Dict[str, Any]]

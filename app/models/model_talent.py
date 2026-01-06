@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional,Dict, Any
 from pydantic import BaseModel
 
 
@@ -28,3 +28,8 @@ class TalentOut(BaseModel):
 class TalentListOut(BaseModel):
     total: int
     items: list[TalentOut]
+
+
+class GraphResponse(BaseModel):
+    nodes: list[Dict[str, Any]]
+    edges: list[Dict[str, Any]]
