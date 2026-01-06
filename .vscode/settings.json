@@ -1,3 +1,16 @@
 {
-  "python.defaultInterpreterPath": "C:/Users/你的用户名/anaconda3/envs/你的环境/python.exe"
+  // 固定 Python 解释器（Conda base）
+  "python.defaultInterpreterPath": "C:/Users/Windows/anaconda3/python.exe",
+
+  // 使用 Pylance 语言服务（代码补全、跳转的核心）
+  "python.languageServer": "Pylance",
+
+  // 终端自动激活 Python 环境
+  "python.terminal.activateEnvironment": true,
+
+  // Python 分析设置（不激进，适合现在阶段）
+  "python.analysis.typeCheckingMode": "basic",
+
+  // 自动补全 import
+  "python.analysis.autoImportCompletions": true
 }
